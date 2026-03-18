@@ -1,410 +1,739 @@
-<!DOCTYPE html>
-<!-- saved from url=(0051)file:///C:/Users/ASUS/Downloads/linux%20create.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
-    <title>Linux Web OS v4</title>
-
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kali Linux v4.0.1</title>
     <style>
+      :root {
+        --kali-blue: #62a0ea;
+        --kali-dark: #1a1a1a;
+        --terminal-green: #00ff88;
+      }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        font-family: monospace;
-
+        font-family: "Segoe UI", Tahoma, sans-serif;
         background: url("https://www.kali.org/blog/about-the-xz-backdoor/images/xz-utils.jpg")
-          center center / cover no-repeat fixed;
-        background-color: black; /* fallback kalau gagal load */
-
+          center/cover;
         height: 100vh;
         width: 100vw;
-
         color: white;
         overflow: hidden;
       }
 
-      /* TASKBAR */
+      /* --- TASKBAR --- */
       #taskbar {
         position: fixed;
-        bottom: 0;
+        top: 0;
         width: 100%;
-        height: 50px;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(10px);
+        height: 35px;
+        background: rgba(15, 15, 15, 0.95);
+        border-bottom: 1px solid #1f5b5b;
         display: flex;
         align-items: center;
-        padding: 0 20px;
+        padding: 0 15px;
+        z-index: 9999;
       }
-
+      .launcher-icons {
+        display: flex;
+        align-items: center;
+        border-right: 1px solid #333;
+        padding-right: 10px;
+        margin-right: 10px;
+      }
       .task-icon {
-        font-size: 22px;
+        margin-right: 12px;
         cursor: pointer;
+        font-size: 18px;
         transition: 0.2s;
+        position: relative;
       }
       .task-icon:hover {
         transform: scale(1.2);
       }
 
-      #clock {
-        margin-left: auto;
+      /* Area untuk aplikasi yang sedang berjalan (Minimized Apps) */
+      #active-apps {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .active-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        border-bottom: 2px solid var(--kali-blue);
+        display: flex;
+        align-items: center;
+        gap: 5px;
       }
 
-      /* WINDOW */
+      /* --- DESKTOP --- */
+      .desktop {
+        position: absolute;
+        inset: 40px 0 0 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        z-index: 1;
+      }
+      .d-icon {
+        width: 80px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .d-symbol {
+        font-size: 40px;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .d-label {
+        font-size: 12px;
+        text-shadow: 1px 1px 2px black;
+      }
+
+      /* --- WINDOW SYSTEM --- */
       .window {
         position: absolute;
-        width: 700px;
-        height: 450px;
-        background: #2b2b2b;
-        border-radius: 10px;
-        box-shadow: 0 0 25px black;
+        background: var(--kali-dark);
+        border: 1px solid #333;
+        border-radius: 6px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
         display: none;
         flex-direction: column;
-        overflow: hidden;
-        animation: fadeIn 0.15s ease;
+        min-width: 300px;
+        min-height: 200px;
       }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
+      .window.maximized {
+        top: 35px !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: calc(100vh - 35px) !important;
+        border-radius: 0;
       }
-
       .window-header {
-        background: #3a3a3a;
-        padding: 8px;
-        cursor: move;
+        background: #000;
+        padding: 6px 12px;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        cursor: move;
+        border-radius: 6px 6px 0 0;
+        border-bottom: 1px solid #222;
       }
-
-      .window-buttons span {
+      .window-controls {
+        display: flex;
+        gap: 10px;
+      }
+      .window-controls span {
         cursor: pointer;
+        font-size: 12px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        transition: 0.2s;
+      }
+      .win-min:hover {
+        background: #444;
+      }
+      .win-max:hover {
+        background: #444;
+      }
+      .win-close:hover {
+        background: #e81123;
       }
 
       .window-content {
         flex: 1;
-        padding: 10px;
         overflow: auto;
+        position: relative;
       }
 
-      /* TERMINAL */
-      #terminalOutput {
-        height: 360px;
-        overflow-y: auto;
+      /* --- BROWSER MULTI-TAB --- */
+      .browser-tabs {
+        display: flex;
+        background: #222;
+        padding: 5px 5px 0 5px;
+        gap: 2px;
       }
-
-      #terminalInput {
-        width: 100%;
-        background: black;
-        color: #00ff88;
-        border: none;
-        padding: 5px;
-      }
-
-      /* VS CODE */
-      #codeEditor {
-        width: 100%;
-        height: 100%;
-        background: #1e1e1e;
-        color: white;
-        border: none;
-      }
-
-      /* EXPLORER */
-      .file-item {
-        padding: 5px;
+      .tab {
+        background: #333;
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 5px 5px 0 0;
         cursor: pointer;
+        max-width: 110px;
+        white-space: nowrap;
+        overflow: hidden;
+        color: #aaa;
+      }
+      .tab.active {
+        background: #444;
+        color: white;
+        border-bottom: 2px solid var(--kali-blue);
+      }
+      .browser-nav {
+        display: flex;
+        background: #222;
+        padding: 5px;
+        gap: 5px;
+        border-bottom: 1px solid #333;
+      }
+      .browser-nav input {
+        flex: 1;
+        background: #000;
+        color: white;
+        border: 1px solid #444;
+        padding: 4px 10px;
+        font-size: 12px;
+        outline: none;
+      }
+
+      /* --- FILE EXPLORER --- */
+      .explorer-toolbar {
+        background: #222;
+        padding: 8px;
+        border-bottom: 1px solid #333;
+        font-size: 12px;
+      }
+      .file-list {
+        padding: 15px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 90px);
+        gap: 10px;
+      }
+      .file-item {
+        text-align: center;
+        cursor: pointer;
+        font-size: 11px;
+        padding: 10px;
+        border-radius: 4px;
       }
       .file-item:hover {
-        background: #444;
+        background: rgba(98, 160, 234, 0.2);
       }
 
-      /* VS CODE STYLE */
-      #editorContainer {
+      /* --- VS CODE --- */
+      #editor-container {
         display: flex;
         height: 100%;
         background: #1e1e1e;
       }
-
-      #lineNumbers {
-        width: 50px;
+      #line-nums {
+        width: 35px;
         background: #252526;
         color: #858585;
-        padding-top: 5px;
         text-align: right;
-        padding-right: 10px;
-        font-size: 14px;
-        overflow: hidden;
-        user-select: none;
+        padding-right: 8px;
+        padding-top: 5px;
+        font-size: 12px;
+        border-right: 1px solid #333;
       }
-
-      #codeEditor {
+      #code-area {
         flex: 1;
         background: #1e1e1e;
-        color: white;
+        color: #d4d4d4;
         border: none;
         outline: none;
         resize: none;
         padding: 5px;
+        font-family: "Consolas", monospace;
+      }
+
+      /* --- TERMINAL --- */
+      #term-out {
+        padding: 10px;
+        font-family: "Courier New", monospace;
         font-size: 14px;
-        line-height: 20px;
-        overflow: auto;
+        color: #fff;
+      }
+      #term-in {
+        background: transparent;
+        border: none;
+        color: var(--terminal-green);
+        outline: none;
+        flex: 1;
+        font-family: inherit;
       }
     </style>
   </head>
   <body>
-    <!-- TERMINAL -->
-    <div class="window" id="terminal" style="top: 80px; left: 200px; display: none;">
-      <div class="window-header" onmousedown="dragStart(event, this.parentElement)">
-        Terminal
-        <div class="window-buttons">
-          <span onclick="closeWin(&#39;terminal&#39;)">❌</span>
-        </div>
-      </div>
-      <div class="window-content">
-        <div id="terminalOutput">Linux Web OS v4<br>Type 'help'<br></div>
-        <input id="terminalInput">
-      </div>
-    </div>
-
-    <!-- FILE EXPLORER -->
-    <div class="window" id="explorer" style="top: 100px; left: 250px">
-      <div class="window-header" onmousedown="dragStart(event, this.parentElement)">
-        File Explorer
-        <div class="window-buttons">
-          <span onclick="closeWin(&#39;explorer&#39;)">❌</span>
-        </div>
-      </div>
-      <div class="window-content" id="fileList"></div>
-    </div>
-
-    <!-- VS CODE -->
-    <div class="window" id="vscode" style="top: 120px; left: 300px">
-      <div class="window-header" onmousedown="dragStart(event, this.parentElement)">
-        VS Code (Mini)
-        <div class="window-buttons">
-          <span onclick="closeWin(&#39;vscode&#39;)">❌</span>
-        </div>
-      </div>
-      <div class="window-content">
-        <div id="editorContainer">
-          <div id="lineNumbers">1<br></div>
-          <textarea id="codeEditor">// Start coding...</textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- NOTES -->
-    <div class="window" id="notes">
-      <div class="window-header" onmousedown="dragStart(event, this.parentElement)">
-        Notes
-        <div class="window-buttons">
-          <span onclick="closeWin(&#39;notes&#39;)">❌</span>
-        </div>
-      </div>
-      <div class="window-content">
-        <textarea style="width: 100%; height: 100%"></textarea>
-      </div>
-    </div>
-
-    <!-- CALCULATOR -->
-    <div class="window" id="calculator">
-      <div class="window-header" onmousedown="dragStart(event, this.parentElement)">
-        Calculator
-        <div class="window-buttons">
-          <span onclick="closeWin(&#39;calculator&#39;)">❌</span>
-        </div>
-      </div>
-      <div class="window-content">
-        <input id="calcInput" placeholder="2+2">
-        <button onclick="calculate()">=</button>
-        <div id="calcResult"></div>
-      </div>
-    </div>
-
-    <!-- TASKBAR (ONLY TERMINAL) -->
     <div id="taskbar">
-      <div class="task-icon" onclick="openWin(&#39;terminal&#39;)">📟</div>
-      <div id="clock">1:06:25 PM</div>
+      <div class="launcher-icons">
+        <div class="task-icon" onclick="openWin('terminal')" title="Terminal">
+          📟
+        </div>
+        <div
+          class="task-icon"
+          onclick="openWin('explorer')"
+          title="File Manager"
+        >
+          📂
+        </div>
+        <div class="task-icon" onclick="openWin('browser')" title="Firefox">
+          🌐
+        </div>
+        <div class="task-icon" onclick="openWin('vscode')" title="VS Code">
+          📝
+        </div>
+      </div>
+
+      <div id="active-apps"></div>
+
+      <div
+        style="
+          margin-left: auto;
+          font-size: 12px;
+          color: var(--kali-blue);
+          font-weight: bold;
+        "
+        id="clock"
+      ></div>
+    </div>
+
+    <div class="desktop">
+      <div class="d-icon" onclick="openWin('explorer')">
+        <span class="d-symbol">📂</span>
+        <span class="d-label">Home</span>
+      </div>
+      <div class="d-icon" onclick="openWin('terminal')">
+        <span class="d-symbol">📟</span>
+        <span class="d-label">Terminal</span>
+      </div>
+    </div>
+
+    <div
+      class="window"
+      id="terminal"
+      style="width: 600px; height: 350px; top: 80px; left: 100px"
+    >
+      <div class="window-header" onmousedown="dragStart(event, 'terminal')">
+        <span style="font-size: 11px">kali@webos: ~</span>
+        <div class="window-controls">
+          <span class="win-min" onclick="minimizeWin('terminal', 'Terminal')"
+            >_</span
+          >
+          <span class="win-max" onclick="maximizeWin('terminal')">▢</span>
+          <span class="win-close" onclick="closeWin('terminal')">×</span>
+        </div>
+      </div>
+      <div class="window-content" style="background: rgba(0, 0, 0, 0.92)">
+        <div id="term-out"></div>
+        <div style="display: flex; padding-left: 10px">
+          <span style="color: var(--terminal-green)">kali@linux:~$ &nbsp;</span>
+          <input id="term-in" autofocus />
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="window"
+      id="browser"
+      style="width: 80%; height: 75%; top: 60px; left: 60px"
+    >
+      <div class="window-header" onmousedown="dragStart(event, 'browser')">
+        <span style="font-size: 11px">Firefox ESR</span>
+        <div class="window-controls">
+          <span class="win-min" onclick="minimizeWin('browser', 'Browser')"
+            >_</span
+          >
+          <span class="win-max" onclick="maximizeWin('browser')">▢</span>
+          <span class="win-close" onclick="closeWin('browser')">×</span>
+        </div>
+      </div>
+      <div class="browser-tabs" id="browserTabs"></div>
+      <div class="browser-nav">
+        <input id="urlInput" value="https://www.bing.com" />
+        <button onclick="loadUrl()">Go</button>
+        <button onclick="addTab()">+</button>
+      </div>
+      <div class="window-content">
+        <iframe
+          id="browserFrame"
+          style="width: 100%; height: 100%; border: none; background: white"
+        ></iframe>
+      </div>
+    </div>
+
+    <div
+      class="window"
+      id="explorer"
+      style="width: 500px; height: 350px; top: 120px; left: 150px"
+    >
+      <div class="window-header" onmousedown="dragStart(event, 'explorer')">
+        <span style="font-size: 11px">File Manager</span>
+        <div class="window-controls">
+          <span class="win-min" onclick="minimizeWin('explorer', 'Files')"
+            >_</span
+          >
+          <span class="win-max" onclick="maximizeWin('explorer')">▢</span>
+          <span class="win-close" onclick="closeWin('explorer')">×</span>
+        </div>
+      </div>
+      <div class="explorer-toolbar">
+        <button onclick="changeDir('..')">⬅ Back</button> | Path:
+        <span id="path-ui">/home/kali</span>
+      </div>
+      <div class="window-content" id="file-list-view"></div>
+    </div>
+
+    <div
+      class="window"
+      id="vscode"
+      style="width: 700px; height: 450px; top: 100px; left: 250px"
+    >
+      <div class="window-header" onmousedown="dragStart(event, 'vscode')">
+        <span style="font-size: 11px">Visual Studio Code</span>
+        <div class="window-controls">
+          <span class="win-min" onclick="minimizeWin('vscode', 'VS Code')"
+            >_</span
+          >
+          <span class="win-max" onclick="maximizeWin('vscode')">▢</span>
+          <span class="win-close" onclick="closeWin('vscode')">×</span>
+        </div>
+      </div>
+      <div class="window-content">
+        <div id="editor-container">
+          <div id="line-nums">1</div>
+          <textarea id="code-area" spellcheck="false"></textarea>
+        </div>
+      </div>
     </div>
 
     <script>
-      /* DRAG */
-      function dragStart(e, el) {
-        let ox = e.clientX - el.offsetLeft;
-        let oy = e.clientY - el.offsetTop;
-        function move(e) {
-          el.style.left = e.clientX - ox + "px";
-          el.style.top = e.clientY - oy + "px";
+      /* --- STATE --- */
+      let zIdx = 1000;
+      let runningApps = {}; // Melacak aplikasi yang sedang berjalan/diminimize
+      let fs = {
+        home: {
+          kali: {
+            Desktop: {},
+            Documents: {},
+            "note.txt": "Kali Linux Web Edition",
+          },
+        },
+      };
+      let currentPath = ["home", "kali"];
+      let tabs = [{ title: "Bing", url: "https://www.bing.com" }];
+      let activeTabIdx = 0;
+
+      /* --- WINDOW MANAGER --- */
+      function openWin(id) {
+        const win = document.getElementById(id);
+        win.style.display = "flex";
+        win.style.zIndex = ++zIdx;
+
+        // Hapus dari daftar taskbar jika dibuka kembali
+        if (runningApps[id]) {
+          delete runningApps[id];
+          renderActiveApps();
         }
-        document.addEventListener("mousemove", move);
-        document.addEventListener(
-          "mouseup",
-          () => document.removeEventListener("mousemove", move),
-          { once: true },
-        );
+
+        if (id === "explorer") renderExplorer();
+        if (id === "browser") renderTabs();
       }
 
-      /* WINDOW CONTROL */
-      function openWin(id) {
-        document.getElementById(id).style.display = "flex";
-      }
       function closeWin(id) {
         document.getElementById(id).style.display = "none";
+        document.getElementById(id).classList.remove("maximized");
+        delete runningApps[id];
+        renderActiveApps();
       }
 
-      /* CLOCK */
+      function minimizeWin(id, label) {
+        document.getElementById(id).style.display = "none";
+        runningApps[id] = label;
+        renderActiveApps();
+      }
+
+      function maximizeWin(id) {
+        document.getElementById(id).classList.toggle("maximized");
+      }
+
+      function renderActiveApps() {
+        const container = document.getElementById("active-apps");
+        container.innerHTML = "";
+        for (let id in runningApps) {
+          let div = document.createElement("div");
+          div.className = "active-item";
+          div.innerHTML = `<span>📂</span> ${runningApps[id]}`;
+          div.onclick = () => openWin(id);
+          container.appendChild(div);
+        }
+      }
+
+      function dragStart(e, id) {
+        const el = document.getElementById(id);
+        if (el.classList.contains("maximized")) return;
+        el.style.zIndex = ++zIdx;
+        let ox = e.clientX - el.offsetLeft;
+        let oy = e.clientY - el.offsetTop;
+        document.onmousemove = (e) => {
+          el.style.left = e.clientX - ox + "px";
+          el.style.top = e.clientY - oy + "px";
+        };
+        document.onmouseup = () => (document.onmousemove = null);
+      }
+
+      /* --- BROWSER --- */
+      function renderTabs() {
+        const container = document.getElementById("browserTabs");
+        container.innerHTML = "";
+        tabs.forEach((tab, i) => {
+          let t = document.createElement("div");
+          t.className = `tab ${i === activeTabIdx ? "active" : ""}`;
+          t.innerHTML = `${tab.title} <span onclick="closeTab(${i}, event)">×</span>`;
+          t.onclick = () => {
+            activeTabIdx = i;
+            renderTabs();
+            updateIframe();
+          };
+          container.appendChild(t);
+        });
+        updateIframe();
+      }
+      function addTab() {
+        if (tabs.length < 7) {
+          tabs.push({ title: "New Tab", url: "https://www.bing.com" });
+          activeTabIdx = tabs.length - 1;
+          renderTabs();
+        }
+      }
+      function closeTab(i, e) {
+        e.stopPropagation();
+        if (tabs.length > 1) {
+          tabs.splice(i, 1);
+          activeTabIdx = 0;
+          renderTabs();
+        }
+      }
+      function updateIframe() {
+        document.getElementById("browserFrame").src = tabs[activeTabIdx].url;
+        document.getElementById("urlInput").value = tabs[activeTabIdx].url;
+      }
+      function loadUrl() {
+        let url = document.getElementById("urlInput").value;
+        if (!url.startsWith("http")) url = "https://" + url;
+        tabs[activeTabIdx].url = url;
+        renderTabs();
+      }
+
+      /* --- EXPLORER --- */
+      function getDir() {
+        let d = fs;
+        currentPath.forEach((p) => (d = d[p]));
+        return d;
+      }
+      function renderExplorer() {
+        const view = document.getElementById("file-list-view");
+        view.className = "file-list";
+        view.innerHTML = "";
+        document.getElementById("path-ui").innerText =
+          "/" + currentPath.join("/");
+        let dir = getDir();
+        for (let n in dir) {
+          let isDir = typeof dir[n] === "object";
+          view.innerHTML += `<div class="file-item" ondblclick="${isDir ? `changeDir('${n}')` : ""}">
+                <div style="font-size: 30px;">${isDir ? "📁" : "📄"}</div>
+                <div>${n}</div>
+            </div>`;
+        }
+      }
+      function changeDir(n) {
+        if (n === "..") {
+          if (currentPath.length > 2) currentPath.pop();
+        } else {
+          currentPath.push(n);
+        }
+        renderExplorer();
+      }
+
+      /* --- TERMINAL --- */
+      document.getElementById("term-in").onkeydown = (e) => {
+        if (e.key === "Enter") {
+          let cmd = e.target.value.trim();
+          printTerm(
+            `<span style="color:var(--terminal-green)">kali@webos:~$</span> ${cmd}`,
+          );
+          handleCmd(cmd);
+          e.target.value = "";
+        }
+      };
+      function printTerm(t) {
+        const o = document.getElementById("term-out");
+        o.innerHTML += `<div>${t}</div>`;
+        o.parentElement.scrollTop = o.parentElement.scrollHeight;
+      }
+      function handleCmd(raw) {
+        let p = raw.split(" ");
+        let c = p[0];
+        let arg = p.slice(1).join(" ");
+        let d = getDir();
+
+        switch (c) {
+          /* ================= BASIC ================= */
+          case "ls":
+            printTerm(Object.keys(d).join("  "));
+            break;
+
+          case "pwd":
+            printTerm("/" + currentPath.join("/"));
+            break;
+
+          case "clear":
+            document.getElementById("term-out").innerHTML = "";
+            break;
+
+          case "mkdir":
+            if (arg) {
+              d[arg] = {};
+              renderExplorer();
+            }
+            break;
+
+          case "touch":
+            if (arg) {
+              d[arg] = "";
+              renderExplorer();
+            }
+            break;
+
+          /* ================= NMAP ================= */
+          case "nmap":
+            printTerm("Starting Nmap 7.94 ( https://nmap.org )...");
+            setTimeout(() => {
+              printTerm("Scanning target: " + (arg || "127.0.0.1"));
+            }, 500);
+
+            setTimeout(() => {
+              printTerm("PORT     STATE SERVICE");
+              printTerm("22/tcp   open  ssh");
+              printTerm("80/tcp   open  http");
+              printTerm("443/tcp  open  https");
+            }, 1200);
+
+            setTimeout(() => {
+              printTerm("Nmap scan done: 1 IP address scanned.");
+            }, 1800);
+            break;
+
+          /* ================= AIRCRACK ================= */
+          case "aircrack-ng":
+            printTerm("Aircrack-ng 1.7 - WiFi Security Tool");
+            setTimeout(() => {
+              printTerm("[+] Starting attack on interface wlan0...");
+            }, 500);
+
+            setTimeout(() => {
+              printTerm("[+] Capturing packets...");
+            }, 1000);
+
+            setTimeout(() => {
+              printTerm("[+] Cracking WPA handshake...");
+            }, 1500);
+
+            setTimeout(() => {
+              printTerm("[KEY FOUND!] password: 12345678");
+            }, 2500);
+            break;
+
+          /* ================= APT INSTALL ================= */
+          case "apt":
+            if (p[1] === "install") {
+              if (!p[2]) {
+                printTerm("E: Please specify package name");
+                break;
+              }
+
+              let pkg = p[2];
+
+              printTerm("Reading package lists... Done");
+              setTimeout(() => {
+                printTerm("Building dependency tree... Done");
+              }, 500);
+
+              setTimeout(() => {
+                printTerm("Installing " + pkg + " ...");
+              }, 1000);
+
+              setTimeout(() => {
+                printTerm(pkg + " successfully installed ✔");
+              }, 1800);
+            } else {
+              printTerm("apt: command not recognized");
+            }
+            break;
+
+          /* ================= GIT ================= */
+          case "git":
+            if (p[1] === "init") {
+              printTerm(
+                "Initialized empty Git repository in /" +
+                  currentPath.join("/") +
+                  "/.git/",
+              );
+              setTimeout(() => {
+                printTerm("git version 2.43.0");
+              }, 500);
+
+              if (p.includes("-v")) {
+                setTimeout(() => {
+                  printTerm("Verbose mode enabled");
+                }, 800);
+              }
+            } else {
+              printTerm("git: unknown command");
+            }
+            break;
+
+          /* ================= NPM (UPGRADE VERSION) ================= */
+          case "npm":
+            if (p[1] === "boost") {
+              printTerm("Optimizing system performance...");
+              setTimeout(() => {
+                printTerm("[✓] Cleaning memory cache...");
+              }, 500);
+
+              setTimeout(() => {
+                printTerm("[✓] Rebuilding system modules...");
+              }, 1000);
+
+              setTimeout(() => {
+                printTerm("[✓] Boosting kernel response...");
+              }, 1500);
+
+              setTimeout(() => {
+                printTerm("System successfully optimized 🚀");
+              }, 2200);
+            } else {
+              printTerm("npm: unknown command");
+            }
+            break;
+
+          /* ================= HELP ================= */
+          case "help":
+            printTerm("Available commands:");
+            printTerm("ls, pwd, mkdir, touch, clear");
+            printTerm("nmap, aircrack-ng");
+            printTerm("apt install <package>");
+            printTerm("git init -v");
+            printTerm("npm boost");
+            break;
+
+          /* ================= DEFAULT ================= */
+          default:
+            if (c) printTerm(`bash: ${c}: command clear found`);
+        }
+      }
+
       setInterval(() => {
         document.getElementById("clock").innerText =
           new Date().toLocaleTimeString();
       }, 1000);
-
-      /* FILE SYSTEM */
-      let fs = {
-        home: {
-          user: {
-            apps: {
-              vscode: "app",
-              notes: "app",
-              calculator: "app",
-            },
-            "readme.txt": "Welcome to WebOS v4",
-          },
-        },
-      };
-
-      let path = ["home", "user"];
-      let username = "user";
-      let history = [];
-
-      function getDir() {
-        let dir = fs;
-        for (let p of path) dir = dir[p];
-        return dir;
-      }
-
-      function print(t) {
-        let out = document.getElementById("terminalOutput");
-        out.innerHTML += t + "<br>";
-        out.scrollTop = out.scrollHeight;
-      }
-
-      /* EXPLORER */
-      function updateExplorer() {
-        let dir = getDir();
-        let list = document.getElementById("fileList");
-        list.innerHTML = "";
-        for (let f in dir) {
-          let div = document.createElement("div");
-          div.className = "file-item";
-          div.innerText = f;
-          div.onclick = () => print(f);
-          list.appendChild(div);
-        }
-      }
-
-      /* TERMINAL */
-      document
-        .getElementById("terminalInput")
-        .addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            let cmd = this.value;
-            history.push(cmd);
-            print(
-              `<span style="color:#00ff88">${username}@webos:~$</span> ${cmd}`,
-            );
-            handle(cmd);
-            this.value = "";
-          }
-        });
-
-      function handle(cmd) {
-        let parts = cmd.split(" ");
-        let c = parts[0];
-        let arg = parts[1];
-
-        switch (c) {
-          case "help":
-            print("Commands:");
-            print("ls, cd, pwd, mkdir, touch, rm");
-            print("explorer");
-            print("open vscode | notes | calculator");
-            break;
-
-          case "ls":
-            for (let f in getDir()) print(f);
-            break;
-
-          case "pwd":
-            print("/" + path.join("/"));
-            break;
-
-          case "cd":
-            if (arg === "..") {
-              if (path.length > 1) path.pop();
-            } else if (getDir()[arg]) path.push(arg);
-            else print("No such directory");
-            break;
-
-          case "explorer":
-            openWin("explorer");
-            updateExplorer();
-            break;
-
-          case "open":
-            if (arg === "vscode") openWin("vscode");
-            else if (arg === "notes") openWin("notes");
-            else if (arg === "calculator") openWin("calculator");
-            else print("App not found");
-            break;
-
-          case "clear":
-            document.getElementById("terminalOutput").innerHTML = "";
-            break;
-
-          default:
-            print("Command not found");
-        }
-      }
-
-      /* CALCULATOR */
-      function calculate() {
-        let input = document.getElementById("calcInput").value;
-        try {
-          document.getElementById("calcResult").innerText = eval(input);
-        } catch {
-          document.getElementById("calcResult").innerText = "Error";
-        }
-      }
-
-      print("Linux Web OS v4");
-      print("Type 'help'");
-
-      /* VS CODE LINE NUMBER SYSTEM */
-
-      const editor = document.getElementById("codeEditor");
-      const lineNumbers = document.getElementById("lineNumbers");
-
-      function updateLineNumbers() {
-        const lines = editor.value.split("\n").length;
-        lineNumbers.innerHTML = "";
-        for (let i = 1; i <= lines; i++) {
-          lineNumbers.innerHTML += i + "<br>";
-        }
-      }
-
-      editor.addEventListener("input", updateLineNumbers);
-      editor.addEventListener("scroll", () => {
-        lineNumbers.scrollTop = editor.scrollTop;
-      });
-
-      updateLineNumbers();
     </script>
-  
-
-</body></html>
+  </body>
+</html>
