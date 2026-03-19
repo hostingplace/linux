@@ -405,330 +405,344 @@
     </div>
 
     <script>
-      /* --- STATE --- */
-      let zIdx = 1000;
-      let runningApps = {}; // Melacak aplikasi yang sedang berjalan/diminimize
-      let fs = {
-        home: {
-          kali: {
-            Desktop: {},
-            Documents: {},
-            "note.txt": "Kali Linux Web Edition",
-          },
-        },
-      };
-      let currentPath = ["home", "kali"];
-      let tabs = [{ title: "Bing", url: "https://www.bing.com" }];
-      let activeTabIdx = 0;
+      /* ================= STATE ================= */
+let zIdx = 1000;
+let runningApps = {};
 
-      /* --- WINDOW MANAGER --- */
-      function openWin(id) {
-        const win = document.getElementById(id);
-        win.style.display = "flex";
-        win.style.zIndex = ++zIdx;
+let fs = {
+  home: {
+    kali: {
+      Desktop: {},
+      Documents: {},
+      "note.txt": "Kali Linux Web Edition",
+    },
+  },
+};
 
-        // Hapus dari daftar taskbar jika dibuka kembali
-        if (runningApps[id]) {
-          delete runningApps[id];
-          renderActiveApps();
-        }
+let currentPath = ["home", "kali"];
+let tabs = [{ title: "Bing", url: "https://www.bing.com" }];
+let activeTabIdx = 0;
 
-        if (id === "explorer") renderExplorer();
-        if (id === "browser") renderTabs();
-      }
+/* ================= WINDOW MANAGER ================= */
+function openWin(id) {
+  const win = document.getElementById(id);
+  win.style.display = "flex";
+  win.style.zIndex = ++zIdx;
 
-      function closeWin(id) {
-        document.getElementById(id).style.display = "none";
-        document.getElementById(id).classList.remove("maximized");
-        delete runningApps[id];
-        renderActiveApps();
-      }
+  if (runningApps[id]) {
+    delete runningApps[id];
+    renderActiveApps();
+  }
 
-      function minimizeWin(id, label) {
-        document.getElementById(id).style.display = "none";
-        runningApps[id] = label;
-        renderActiveApps();
-      }
+  if (id === "explorer") renderExplorer();
+  if (id === "browser") renderTabs();
+}
 
-      function maximizeWin(id) {
-        document.getElementById(id).classList.toggle("maximized");
-      }
+function closeWin(id) {
+  document.getElementById(id).style.display = "none";
+  document.getElementById(id).classList.remove("maximized");
+  delete runningApps[id];
+  renderActiveApps();
+}
 
-      function renderActiveApps() {
-        const container = document.getElementById("active-apps");
-        container.innerHTML = "";
-        for (let id in runningApps) {
-          let div = document.createElement("div");
-          div.className = "active-item";
-          div.innerHTML = `<span>📂</span> ${runningApps[id]}`;
-          div.onclick = () => openWin(id);
-          container.appendChild(div);
-        }
-      }
+function minimizeWin(id, label) {
+  document.getElementById(id).style.display = "none";
+  runningApps[id] = label;
+  renderActiveApps();
+}
 
-      function dragStart(e, id) {
-        const el = document.getElementById(id);
-        if (el.classList.contains("maximized")) return;
-        el.style.zIndex = ++zIdx;
-        let ox = e.clientX - el.offsetLeft;
-        let oy = e.clientY - el.offsetTop;
-        document.onmousemove = (e) => {
-          el.style.left = e.clientX - ox + "px";
-          el.style.top = e.clientY - oy + "px";
-        };
-        document.onmouseup = () => (document.onmousemove = null);
-      }
+function maximizeWin(id) {
+  document.getElementById(id).classList.toggle("maximized");
+}
 
-      /* --- BROWSER --- */
-      function renderTabs() {
-        const container = document.getElementById("browserTabs");
-        container.innerHTML = "";
-        tabs.forEach((tab, i) => {
-          let t = document.createElement("div");
-          t.className = `tab ${i === activeTabIdx ? "active" : ""}`;
-          t.innerHTML = `${tab.title} <span onclick="closeTab(${i}, event)">×</span>`;
-          t.onclick = () => {
-            activeTabIdx = i;
-            renderTabs();
-            updateIframe();
-          };
-          container.appendChild(t);
-        });
-        updateIframe();
-      }
-      function addTab() {
-        if (tabs.length < 7) {
-          tabs.push({ title: "New Tab", url: "https://www.bing.com" });
-          activeTabIdx = tabs.length - 1;
-          renderTabs();
-        }
-      }
-      function closeTab(i, e) {
-        e.stopPropagation();
-        if (tabs.length > 1) {
-          tabs.splice(i, 1);
-          activeTabIdx = 0;
-          renderTabs();
-        }
-      }
-      function updateIframe() {
-        document.getElementById("browserFrame").src = tabs[activeTabIdx].url;
-        document.getElementById("urlInput").value = tabs[activeTabIdx].url;
-      }
-      function loadUrl() {
-        let url = document.getElementById("urlInput").value;
-        if (!url.startsWith("http")) url = "https://" + url;
-        tabs[activeTabIdx].url = url;
-        renderTabs();
-      }
+function renderActiveApps() {
+  const container = document.getElementById("active-apps");
+  container.innerHTML = "";
+  for (let id in runningApps) {
+    let div = document.createElement("div");
+    div.className = "active-item";
+    div.innerHTML = `<span>📂</span> ${runningApps[id]}`;
+    div.onclick = () => openWin(id);
+    container.appendChild(div);
+  }
+}
 
-      /* --- EXPLORER --- */
-      function getDir() {
-        let d = fs;
-        currentPath.forEach((p) => (d = d[p]));
-        return d;
+function dragStart(e, id) {
+  const el = document.getElementById(id);
+  if (el.classList.contains("maximized")) return;
+  el.style.zIndex = ++zIdx;
+  let ox = e.clientX - el.offsetLeft;
+  let oy = e.clientY - el.offsetTop;
+  document.onmousemove = (e) => {
+    el.style.left = e.clientX - ox + "px";
+    el.style.top = e.clientY - oy + "px";
+  };
+  document.onmouseup = () => (document.onmousemove = null);
+}
+
+/* ================= BROWSER ================= */
+function renderTabs() {
+  const container = document.getElementById("browserTabs");
+  container.innerHTML = "";
+  tabs.forEach((tab, i) => {
+    let t = document.createElement("div");
+    t.className = `tab ${i === activeTabIdx ? "active" : ""}`;
+    t.innerHTML = `${tab.title} <span onclick="closeTab(${i}, event)">×</span>`;
+    t.onclick = () => {
+      activeTabIdx = i;
+      renderTabs();
+      updateIframe();
+    };
+    container.appendChild(t);
+  });
+  updateIframe();
+}
+
+function addTab() {
+  if (tabs.length < 7) {
+    tabs.push({ title: "New Tab", url: "https://www.bing.com" });
+    activeTabIdx = tabs.length - 1;
+    renderTabs();
+  }
+}
+
+function closeTab(i, e) {
+  e.stopPropagation();
+  if (tabs.length > 1) {
+    tabs.splice(i, 1);
+    activeTabIdx = 0;
+    renderTabs();
+  }
+}
+
+function updateIframe() {
+  document.getElementById("browserFrame").src = tabs[activeTabIdx].url;
+  document.getElementById("urlInput").value = tabs[activeTabIdx].url;
+}
+
+function loadUrl() {
+  let url = document.getElementById("urlInput").value;
+  if (!url.startsWith("http")) url = "https://" + url;
+  tabs[activeTabIdx].url = url;
+  renderTabs();
+}
+
+/* ================= FILE SYSTEM ================= */
+function getDir() {
+  let dir = fs;
+  currentPath.forEach((p) => (dir = dir[p]));
+  return dir;
+}
+
+function pathToString() {
+  return "/" + currentPath.join("/");
+}
+
+function renderExplorer() {
+  const view = document.getElementById("file-list-view");
+  view.className = "file-list";
+  view.innerHTML = "";
+
+  document.getElementById("path-ui").innerText = pathToString();
+
+  let dir = getDir();
+  for (let n in dir) {
+    let isDir = typeof dir[n] === "object";
+    view.innerHTML += `
+      <div class="file-item" ondblclick="${isDir ? `changeDir('${n}')` : ""}">
+        <div style="font-size:30px;">${isDir ? "📁" : "📄"}</div>
+        <div>${n}</div>
+      </div>`;
+  }
+}
+
+function changeDir(n) {
+  if (n === "..") {
+    if (currentPath.length > 2) currentPath.pop();
+  } else {
+    currentPath.push(n);
+  }
+  renderExplorer();
+}
+
+/* ================= TERMINAL ================= */
+document.getElementById("term-in").onkeydown = (e) => {
+  if (e.key === "Enter") {
+    let cmd = e.target.value.trim();
+    printTerm(`<span style="color:var(--terminal-green)">kali@linux:~$</span> ${cmd}`);
+    handleCmd(cmd);
+    e.target.value = "";
+  }
+};
+
+function printTerm(text) {
+  const out = document.getElementById("term-out");
+  out.innerHTML += `<div>${text}</div>`;
+  out.parentElement.scrollTop = out.parentElement.scrollHeight;
+}
+
+/* ================= COMMAND HANDLER ================= */
+function handleCmd(raw) {
+  let p = raw.split(" ");
+  let c = p[0];
+  let args = p.slice(1);
+  let dir = getDir();
+
+  switch (c) {
+
+    case "cd":
+      if (!args[0] || args[0] === "~") currentPath = ["home","kali"];
+      else if (args[0] === "..") {
+        if (currentPath.length > 2) currentPath.pop();
       }
-      function renderExplorer() {
-        const view = document.getElementById("file-list-view");
-        view.className = "file-list";
-        view.innerHTML = "";
-        document.getElementById("path-ui").innerText =
-          "/" + currentPath.join("/");
-        let dir = getDir();
-        for (let n in dir) {
-          let isDir = typeof dir[n] === "object";
-          view.innerHTML += `<div class="file-item" ondblclick="${isDir ? `changeDir('${n}')` : ""}">
-                <div style="font-size: 30px;">${isDir ? "📁" : "📄"}</div>
-                <div>${n}</div>
-            </div>`;
-        }
-      }
-      function changeDir(n) {
-        if (n === "..") {
-          if (currentPath.length > 2) currentPath.pop();
-        } else {
-          currentPath.push(n);
-        }
+      else if (dir[args[0]] && typeof dir[args[0]] === "object") {
+        currentPath.push(args[0]);
+      } else printTerm("cd: no such directory");
+
+      printTerm(pathToString());
+      renderExplorer();
+      break;
+
+    case "pwd":
+      printTerm(pathToString());
+      break;
+
+    case "ls":
+      let items = Object.keys(dir);
+      printTerm(items.length ? items.join("   ") : "(empty)");
+      break;
+
+    case "touch":
+      if (!args[0]) return printTerm("touch: file name required");
+      dir[args[0]] = "";
+      printTerm("file created: " + args[0]);
+      renderExplorer();
+      break;
+
+    case "mkdir":
+      if (!args[0]) return printTerm("mkdir: folder name required");
+      dir[args[0]] = {};
+      printTerm("directory created: " + args[0]);
+      renderExplorer();
+      break;
+
+    case "cat":
+      if (!args[0]) return printTerm("cat: file name required");
+      if (dir[args[0]] === undefined) return printTerm("cat: file not found");
+      if (typeof dir[args[0]] === "object") return printTerm("cat: is a directory");
+      printTerm(dir[args[0]] || "(empty file)");
+      break;
+
+    case "echo":
+      let parts = raw.split(">");
+      if (parts.length === 2) {
+        let text = parts[0].replace("echo","").trim();
+        let file = parts[1].trim();
+        dir[file] = text;
+        printTerm("written to " + file);
         renderExplorer();
+      } else printTerm("usage: echo text > file.txt");
+      break;
+
+    case "open":
+      if (args[0] === "explorer") {
+        printTerm("Opening File Manager...");
+        openWin("explorer");
+      } else if (args[0] === "notes") {
+        printTerm("Opening Notes...");
+      } else printTerm("open: unknown app");
+      break;
+
+    case "explorer":
+      printTerm("Opening File Manager...");
+      openWin("explorer");
+      break;
+
+    case "notes":
+      printTerm("Opening Notes...");
+      break;
+
+    case "neofetch":
+      printTerm(`<pre style="color:#62a0ea">
+      .--.
+     |o_o |
+     |:_/ |
+    //   \\\\
+   (|     | )
+  /'\\_   _/\\
+  \\___)=(___/
+
+kali@webos
+--------------
+OS: Kali Linux WebOS
+Path: ${pathToString()}
+Uptime: ${Math.floor(performance.now()/1000)} sec
+Resolution: ${window.innerWidth}x${window.innerHeight}
+Shell: web-terminal
+</pre>`);
+      break;
+
+    case "nmap":
+      printTerm("Starting Nmap...");
+      setTimeout(()=>printTerm("Scanning "+(args[0]||"127.0.0.1")),500);
+      setTimeout(()=>{
+        printTerm("PORT   STATE SERVICE");
+        printTerm("22/tcp open  ssh");
+        printTerm("80/tcp open  http");
+        printTerm("443/tcp open https");
+      },1200);
+      break;
+
+    case "aircrack-ng":
+      printTerm("Aircrack-ng...");
+      setTimeout(()=>printTerm("Capturing packets..."),500);
+      setTimeout(()=>printTerm("[KEY FOUND] password: 12345678"),1500);
+      break;
+
+    case "apt":
+      if (args[0] === "install") {
+        if (!args[1]) return printTerm("E: package required");
+        printTerm("Installing "+args[1]+"...");
+        setTimeout(()=>printTerm(args[1]+" installed ✔"),1500);
       }
+      break;
 
-      /* --- TERMINAL --- */
-      document.getElementById("term-in").onkeydown = (e) => {
-        if (e.key === "Enter") {
-          let cmd = e.target.value.trim();
-          printTerm(
-            `<span style="color:var(--terminal-green)">kali@webos:~$</span> ${cmd}`,
-          );
-          handleCmd(cmd);
-          e.target.value = "";
-        }
-      };
-      function printTerm(t) {
-        const o = document.getElementById("term-out");
-        o.innerHTML += `<div>${t}</div>`;
-        o.parentElement.scrollTop = o.parentElement.scrollHeight;
+    case "git":
+      if (args[0] === "init") {
+        printTerm("Initialized empty Git repo in "+pathToString());
+        if (args.includes("-v")) printTerm("git version 2.43.0");
       }
-      function handleCmd(raw) {
-        let p = raw.split(" ");
-        let c = p[0];
-        let arg = p.slice(1).join(" ");
-        let d = getDir();
+      break;
 
-        switch (c) {
-          /* ================= BASIC ================= */
-          case "ls":
-            printTerm(Object.keys(d).join("  "));
-            break;
-
-          case "pwd":
-            printTerm("/" + currentPath.join("/"));
-            break;
-
-          case "clear":
-            document.getElementById("term-out").innerHTML = "";
-            break;
-
-          case "mkdir":
-            if (arg) {
-              d[arg] = {};
-              renderExplorer();
-            }
-            break;
-
-          case "touch":
-            if (arg) {
-              d[arg] = "";
-              renderExplorer();
-            }
-            break;
-
-          /* ================= NMAP ================= */
-          case "nmap":
-            printTerm("Starting Nmap 7.94 ( https://nmap.org )...");
-            setTimeout(() => {
-              printTerm("Scanning target: " + (arg || "127.0.0.1"));
-            }, 500);
-
-            setTimeout(() => {
-              printTerm("PORT     STATE SERVICE");
-              printTerm("22/tcp   open  ssh");
-              printTerm("80/tcp   open  http");
-              printTerm("443/tcp  open  https");
-            }, 1200);
-
-            setTimeout(() => {
-              printTerm("Nmap scan done: 1 IP address scanned.");
-            }, 1800);
-            break;
-
-          /* ================= AIRCRACK ================= */
-          case "aircrack-ng":
-            printTerm("Aircrack-ng 1.7 - WiFi Security Tool");
-            setTimeout(() => {
-              printTerm("[+] Starting attack on interface wlan0...");
-            }, 500);
-
-            setTimeout(() => {
-              printTerm("[+] Capturing packets...");
-            }, 1000);
-
-            setTimeout(() => {
-              printTerm("[+] Cracking WPA handshake...");
-            }, 1500);
-
-            setTimeout(() => {
-              printTerm("[KEY FOUND!] password: 12345678");
-            }, 2500);
-            break;
-
-          /* ================= APT INSTALL ================= */
-          case "apt":
-            if (p[1] === "install") {
-              if (!p[2]) {
-                printTerm("E: Please specify package name");
-                break;
-              }
-
-              let pkg = p[2];
-
-              printTerm("Reading package lists... Done");
-              setTimeout(() => {
-                printTerm("Building dependency tree... Done");
-              }, 500);
-
-              setTimeout(() => {
-                printTerm("Installing " + pkg + " ...");
-              }, 1000);
-
-              setTimeout(() => {
-                printTerm(pkg + " successfully installed ✔");
-              }, 1800);
-            } else {
-              printTerm("apt: command not recognized");
-            }
-            break;
-
-          /* ================= GIT ================= */
-          case "git":
-            if (p[1] === "init") {
-              printTerm(
-                "Initialized empty Git repository in /" +
-                  currentPath.join("/") +
-                  "/.git/",
-              );
-              setTimeout(() => {
-                printTerm("git version 2.43.0");
-              }, 500);
-
-              if (p.includes("-v")) {
-                setTimeout(() => {
-                  printTerm("Verbose mode enabled");
-                }, 800);
-              }
-            } else {
-              printTerm("git: unknown command");
-            }
-            break;
-
-          /* ================= NPM (UPGRADE VERSION) ================= */
-          case "npm":
-            if (p[1] === "boost") {
-              printTerm("Optimizing system performance...");
-              setTimeout(() => {
-                printTerm("[✓] Cleaning memory cache...");
-              }, 500);
-
-              setTimeout(() => {
-                printTerm("[✓] Rebuilding system modules...");
-              }, 1000);
-
-              setTimeout(() => {
-                printTerm("[✓] Boosting kernel response...");
-              }, 1500);
-
-              setTimeout(() => {
-                printTerm("System successfully optimized 🚀");
-              }, 2200);
-            } else {
-              printTerm("npm: unknown command");
-            }
-            break;
-
-          /* ================= HELP ================= */
-          case "help":
-            printTerm("Available commands:");
-            printTerm("ls, pwd, mkdir, touch, clear");
-            printTerm("nmap, aircrack-ng");
-            printTerm("apt install <package>");
-            printTerm("git init -v");
-            printTerm("npm boost");
-            break;
-
-          /* ================= DEFAULT ================= */
-          default:
-            if (c) printTerm(`bash: ${c}: command clear found`);
-        }
+    case "npm":
+      if (args[0] === "boost") {
+        printTerm("Optimizing system...");
+        setTimeout(()=>printTerm("System optimized 🚀"),1500);
       }
+      break;
+
+    case "clear":
+      document.getElementById("term-out").innerHTML="";
+      break;
+
+    case "help":
+      printTerm("Commands:");
+      printTerm("cd, ls, pwd, mkdir, touch, cat, echo");
+      printTerm("open explorer | notes");
+      printTerm("nmap, aircrack-ng, apt, git, npm");
+      printTerm("neofetch");
+      break;
+
+    default:
+      if (c) printTerm(`bash: ${c}: command clear found`);
+  }
+}
+
+/* ================= CLOCK ================= */
+setInterval(()=>{
+  document.getElementById("clock").innerText =
+    new Date().toLocaleTimeString();
+},1000);
 
       setInterval(() => {
         document.getElementById("clock").innerText =
